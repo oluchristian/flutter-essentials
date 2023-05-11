@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomePageFB extends StatefulWidget {
+  const HomePageFB({super.key});
   static const String routeName = '/home';
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePageFB> createState() => _HomePageFBState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageFBState extends State<HomePageFB> {
   // var myText = "Change My Name";
   // TextEditingController _nameController = TextEditingController();
 
@@ -30,9 +30,7 @@ class _HomePageState extends State<HomePage> {
   Future fetchData() async {
     var res = await http.get(url);
     data = jsonDecode(res.body);
-    setState(() {
-      
-    });
+    return data;
   }
 
   @override
@@ -55,17 +53,35 @@ class _HomePageState extends State<HomePage> {
           }, icon: Icon(Icons.exit_to_app,),)
         ],
       ),
-      body: data != null
-          ? ListView.builder(itemBuilder: (context, index){
+      body: FutureBuilder(
+        future: fetchData(),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              return Center(
+                child: Text('Fetch something'),
+              );
+              case ConnectionState.active:
+              case ConnectionState.waiting:
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              case ConnectionState.done:
+                if(snapshot.hasError){
+                  return Center(
+                    child: Text('Some Error'),
+                  );
+                }
+                return ListView.builder(itemBuilder: (context, index){
             return ListTile(
               title: Text(data[index]['title']),
               subtitle: Text('ID: ${data[index]['id']}'),
               leading: Image.network(data[index]['url']),
             );
-          }, itemCount: data.length,)
-          : Center(
-              child: CircularProgressIndicator(),
-            ),
+          }, itemCount: data.length,);
+          }
+        },
+      ),
       drawer: MyDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
